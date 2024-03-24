@@ -22,6 +22,8 @@ Route::group([
 ], function ($router) {
   Route::post('/register', [AuthController::class, 'register'])->name('register');
   Route::post('/login', [AuthController::class, 'login'])->name('login');
+  Route::post('/login-ecommerce', [AuthController::class, 'loginEcommerce'])->name('login.ecommerce');
+  Route::post('/login/verify-email/', [AuthController::class, 'verifyEmail'])->name('verify.email');
   Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
   Route::post('/refresh', [AuthController::class, 'refresh'])->name('refresh');
   Route::post('/me', [AuthController::class, 'me'])->name('me');
