@@ -3,19 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Mail\ForgotPasswordMail;
 use App\Mail\VerifiedMail;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
-  /**
-   * Create a new AuthController instance.
-   *
-   * @return void
-   */
   public function __construct()
   {
     $this->middleware('auth:api', [
@@ -24,16 +21,14 @@ class AuthController extends Controller
         'loginEcommerce',
         'register',
         'verifyEmail',
+        'forgotPassword',
+        'verifySetPassword',
+        'setNewPassword',
       ]
     ]);
   }
 
 
-  /**
-   * Register a User.
-   *
-   * @return \Illuminate\Http\JsonResponse
-   */
   public function register()
   {
     $validator = Validator::make(request()->all(), [
@@ -61,15 +56,10 @@ class AuthController extends Controller
     // Send email verification
     Mail::to($user->email)->send(new VerifiedMail($user));
 
-    return response()->json($user, 201);
+    return response()->json(['registered' => true, 'user' => $user], 201);
   }
 
 
-  /**
-   * Get a JWT via given credentials.
-   *
-   * @return \Illuminate\Http\JsonResponse
-   */
   public function login()
   {
     if (!$token = auth('api')->attempt([
@@ -82,6 +72,7 @@ class AuthController extends Controller
 
     return $this->respondWithToken($token);
   }
+
 
   public function loginEcommerce()
   {
@@ -114,11 +105,7 @@ class AuthController extends Controller
     return $this->respondWithToken($token);
   }
 
-  /**
-   * Verify email.
-   *
-   * @return \Illuminate\Http\JsonResponse
-   */
+
   public function verifyEmail(Request $request)
   {
     $user = User::where('unique_code', $request->code)->first();
@@ -142,27 +129,103 @@ class AuthController extends Controller
       [
         'verified' => true,
         'message' => 'Email verified successfully. Please login.',
-        'unique_code' => $request->code,
       ],
       200
     );
   }
 
-  /**
-   * Get the authenticated User.
-   *
-   * @return \Illuminate\Http\JsonResponse
-   */
+
+  public function forgotPassword(Request $request)
+  {
+    $user = User::where('email', $request->email)->first();
+
+    if (!$user) {
+      return response()->json(
+        [
+          'error' => 'Not Found',
+          'message' => 'Email not found.',
+          'code' => 1,
+        ],
+        404
+      );
+    }
+
+    $user->unique_code = uniqid();
+    $user->save();
+
+    // Send email verification
+    Mail::to($user->email)->send(new ForgotPasswordMail($user));
+
+    return response()->json(
+      [
+        'sent' => true,
+        'message' => 'Please check your email to reset your password.',
+      ],
+      200
+    );
+  }
+
+
+  public function verifySetPassword(Request $request)
+  {
+    $user = User::where('unique_code', $request->code)->first();
+
+    if (!$user) {
+      return response()->json(
+        [
+          'error' => 'Not Found',
+          'message' => 'The code is invalid.',
+          'code' => 1,
+        ],
+        403
+      );
+    }
+
+    return response()->json(
+      [
+        'verified' => true,
+        'message' => 'Code verified successfully. Please set your new password.',
+      ],
+      200
+    );
+  }
+  
+  
+  public function setNewPassword(Request $request)
+  {
+    $user = User::where('unique_code', $request->code)->first();
+
+    if (!$user) {
+      return response()->json(
+        [
+          'error' => 'Not Found',
+          'message' => 'Error setting new password, please try again.',
+          'code' => 1,
+        ],
+        403
+      );
+    }
+
+    $user->password = Hash::make($request->newPassword);
+    $user->unique_code = null;
+    $user->save();
+
+    return response()->json(
+      [
+        'set' => true,
+        'message' => 'Password reset successfully. Please login.',
+      ],
+      200
+    );
+  }
+
+
   public function me()
   {
     return response()->json(auth('api')->user());
   }
 
-  /**
-   * Log the user out (Invalidate the token).
-   *
-   * @return \Illuminate\Http\JsonResponse
-   */
+
   public function logout()
   {
     auth('api')->logout();
@@ -170,26 +233,19 @@ class AuthController extends Controller
     return response()->json(['message' => 'Successfully logged out']);
   }
 
-  /**
-   * Refresh a token.
-   *
-   * @return \Illuminate\Http\JsonResponse
-   */
+
   public function refresh()
   {
+    // Refresh token
     return $this->respondWithToken(auth('api')->refresh());
   }
 
-  /**
-   * Get the token array structure.
-   *
-   * @param  string $token
-   *
-   * @return \Illuminate\Http\JsonResponse
-   */
+
   protected function respondWithToken($token)
   {
+    // Return token and user data
     return response()->json([
+      'login' => true,
       'accessToken' => $token,
       'tokenType' => 'bearer',
       'expiresIn' => auth('api')->factory()->getTTL() * 60,
