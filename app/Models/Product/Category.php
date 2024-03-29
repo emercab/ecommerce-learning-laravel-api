@@ -15,21 +15,23 @@ class Category extends Model
     'name',
     'icon',
     'image',
+    'status',
     'department_id',
     'category_id',
     'position',
+    'type_category',
   ];
 
 
   public function department()
   {
-    return $this->belongsTo(Category::class, 'department_id');
+    return $this->belongsTo(Category::class);
   }
 
 
   public function category()
   {
-    return $this->belongsTo(Category::class, 'category_id');
+    return $this->belongsTo(Category::class);
   }
   
 }

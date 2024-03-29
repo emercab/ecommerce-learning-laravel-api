@@ -24,7 +24,7 @@ class CategoryController extends Controller
 
     return response()->json([
       'categories' => CategoryCollection::make($categories),
-      'total' => $categories->total(),
+      'totalPages' => $categories->total(),
     ]);
   }
 
@@ -35,15 +35,15 @@ class CategoryController extends Controller
     $existsCategory = Category::where('name', $request->name)->first();
     if ($existsCategory) {
       return response()->json([
-        'message' => 'Category already exists',
+        'message' => 'Category already exists.',
         'code' => 403,
-      ]);
+      ], 403);
     }
 
     // Check if image is present
     if ($request->hasFile('img')) {
-      $image = $request->file('image');
-      $path = Storage::putFile('categories', $image);
+      $image = $request->file('img');
+      $path = Storage::putFile('category', $image);
 
       // Add the image path to the request
       $request->request->add(['image' => $path]);
@@ -54,6 +54,7 @@ class CategoryController extends Controller
 
     return response()->json([
       'message' => 'Category created successfully.',
+      'category' => CategoryResource::make($category),
       'code' => 200,
     ]);
   }
@@ -92,7 +93,7 @@ class CategoryController extends Controller
         Storage::delete($category->image);
       }
       $image = $request->file('image');
-      $path = Storage::putFile('categories', $image);
+      $path = Storage::putFile('category', $image);
 
       // Add the image path to the request
       $request->request->add(['image' => $path]);
@@ -121,11 +122,16 @@ class CategoryController extends Controller
   }
 
 
-  public function getCategories()
+  public function listCategories()
   {
+    $departments = Category::whereNull('department_id')->whereNull('category_id')->get();
+    $categories = Category::whereNotNull('department_id')->whereNull('category_id')->get();
+
     return response()->json([
-      'departments' => Category::whereNull('department_id')->whereNull('category_id')->get(),
-      'categories' => Category::whereNotNull('department_id')->whereNull('category_id')->get(),
+      'departments' => $departments,
+      'numDepartments' => $departments->count(),
+      'categories' => $categories,
+      'numCategories' => $categories->count(),
       'code' => 200,
     ]);
   }

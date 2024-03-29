@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\Admin\Product\CategoryController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\AuthController;
@@ -40,7 +39,8 @@ Route::group(
     'prefix' => 'admin',
   ],
   function () {
-    Route::get('category/get-categories', [CategoryController::class, 'getCategories']);
+    Route::get('category/list-departments-categories', [CategoryController::class, 'listCategories']);
     Route::resource('category', CategoryController::class);
+    Route::post('category/{id}', [CategoryController::class, 'update']);
   }
 );

@@ -14,6 +14,7 @@ class CategoryResource extends JsonResource
       'name' => $this->resource->name,
       'icon' => $this->resource->icon,
       'image' => $this->resource->image ? env('APP_URL') . 'storage/' . $this->resource->image : null,
+      'status' => $this->resource->status,
       'department_id' => $this->resource->department_id,
       'department' => $this->resource->department
         ? [
@@ -27,6 +28,7 @@ class CategoryResource extends JsonResource
           ]
         : null,
       'position' => $this->resource->position,
+      'type_category' => $this->resource->type_category,
       'created_at' => $this->resource->created_at->format('Y-m-d H:i:s'),
     ];
   }
