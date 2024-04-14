@@ -18,9 +18,9 @@ class CategoryController extends Controller
     $search = $request->search;
     
     // Get all the categories from the search
-    $categories = Category::where('name', 'like', "%$search%")
+    $categories = Category::where('name', 'like', '%'.$search.'%')
       ->orderBy('id', 'desc')
-      ->paginate(25);
+      ->paginate(2);
 
     return response()->json([
       'categories' => CategoryCollection::make($categories),

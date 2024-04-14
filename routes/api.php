@@ -17,7 +17,7 @@ use App\Http\Controllers\AuthController;
 */
 
 /********************* Auth *********************/
-Route::prefix('auth')->group(function () {
+Route::prefix('auth')->group(function ($router) {
   Route::controller(AuthController::class)->group(function () {
     Route::post('/register', 'register')->name('register');
     Route::post('/login', 'login')->name('login');
@@ -38,7 +38,7 @@ Route::group(
     'middleware' => 'auth:api',
     'prefix' => 'admin',
   ],
-  function () {
+  function($router) {
     Route::get('category/list-departments-categories', [CategoryController::class, 'listCategories']);
     Route::resource('category', CategoryController::class);
     Route::post('category/{id}', [CategoryController::class, 'update']);
